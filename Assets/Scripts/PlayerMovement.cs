@@ -11,21 +11,19 @@ public class PlayerMovement : MonoBehaviour
     bool jump = false;
     bool crouch = false;
     bool attack = false;
-    private bool m_FacingRight = true;  // For determining which way the player is currently facing.
+    private bool FacingRight = true;  // For determining which way the player is currently facing.
 
     private bool isGrounded;            // Whether or not the player is grounded.
     public Transform groundCheck;
     public float checkRadius;
     public LayerMask whatIsGround;
     private int JumpCount = 0;
-    public int doubleJump;
-
+    private bool DoubleJump;
     Rigidbody2D rb;
 
   
     void Start()
     {
-        doubleJump = JumpCount;
         rb = GetComponent<Rigidbody2D>();
     }
     // Update is called once per frame
@@ -40,8 +38,13 @@ public class PlayerMovement : MonoBehaviour
         {
             jump = true;
             animator.SetBool("Jumping", true);
+            Jump();
         }
-
+        if (Input.GetButtonUp("Jump"))
+        {
+            jump = false;
+            animator.SetBool("Jumping", false);
+        }
         if (Input.GetButtonDown("Crouch"))
         {
             crouch = true;
@@ -65,30 +68,34 @@ public class PlayerMovement : MonoBehaviour
             animator.SetBool("Attacking", false);
 
         }
-
         rb.velocity = new Vector2(horizontalMove * runSpeed, rb.velocity.y);
-        if (horizontalMove > 0 && !m_FacingRight)
+        if (horizontalMove > 0 && !FacingRight)
         {
             // ... flip the player.
             Flip();
         }
         // Otherwise if the input is moving the player left and the player is facing right...
-        else if (horizontalMove < 0 && m_FacingRight)
+        else if (horizontalMove < 0 && FacingRight)
         {
             // ... flip the player.
             Flip();
         }
-
-     
-        if (isGrounded == true)
+    }
+     private void Jump()
+    {
+        if (isGrounded)
         {
-            doubleJump = JumpCount;
-        }
-        if (jump && (JumpCount < 1) && isGrounded)
-        {
-            Debug.Log(JumpCount);
             rb.velocity = Vector2.up * JumpForce;
-            ++JumpCount;
+            DoubleJump = true;
+        }
+        else
+        {
+            if (DoubleJump)
+            {
+                DoubleJump = false;
+                rb.velocity = new Vector2(rb.velocity.x, 0);
+                rb.velocity = Vector2.up * JumpForce;
+            }
         }
     }
     private void FixedUpdate()
@@ -98,7 +105,7 @@ public class PlayerMovement : MonoBehaviour
     private void Flip()
     {
         // Switch the way the player is labelled as facing.
-        m_FacingRight = !m_FacingRight;
+        FacingRight = !FacingRight;
 
         // Multiply the player's x local scale by -1.
         Vector3 theScale = transform.localScale;
